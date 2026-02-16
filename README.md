@@ -1,3 +1,16 @@
+---
+title: Oasis Security
+emoji: 🚨
+colorFrom: red
+colorTo: pink
+sdk: streamlit
+sdk_version: "1.28.0"
+python_version: "3.9"
+app_file: app.py
+pinned: false
+---
+
+
 # 🚨 OASIS Security Module
 
 [![Streamlit App](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://oasis-security.streamlit.app)
