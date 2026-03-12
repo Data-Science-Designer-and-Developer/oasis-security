@@ -1,11 +1,8 @@
-numpy>=1.26
+streamlit>=1.38.0
 pandas>=2.0.0
+plotly>=5.15.0
+numpy>=1.26.0
 geopandas==0.14.0
-plotly==5.17.0
-streamlit==1.28.0
-requests==2.31.0
-packaging<24
-wheel<0.47
-seaborn
-scikit-learn
-joblib
+fiona==1.10.1
+pyproj==3.7.2
+shapely==2.1.2
