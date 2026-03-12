@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 **🏴‍☠️ Oasis Security – Crime Predictor
 
 Modèle de prédiction de la délinquance en France (taux pour 100 000 habitants) intégré dans l’écosystème Oasis Security.
@@ -153,88 +154,50 @@ Ce pattern est compatible avec :
 
     ou une intégration dans un pipeline plus large (Oasis, Streamlit, etc.).
 
+=======
+>>>>>>> 7cca8880 (Update README.md and project files, add new datasets and notebooks)
 # 🏴‍☠️ Oasis Security – Crime Predictor
 
-[![CI/CD](https://github.com/Dreipfelt/oasis-security/actions/workflows/ci-cd.yml/badge.svg)](https://github.com/Dreipfelt/oasis-security/actions)
-[![Docker](https://img.shields.io/badge/Docker-GHCR-blue)](https://ghcr.io/Dreipfelt/oasis-security)
-[![Model](https://img.shields.io/badge/Model-R²=0.806-green)](https://github.com/Dreipfelt/oasis-security/blob/master/models/crime_predictor/models/crime_predictor.pkl)
+[![CI/CD](https://github.com/Data-Science-Designer-and-Developer/oasis-security/actions/workflows/ci-cd.yml/badge.svg)](https://github.com/Data-Science-Designer-and-Developer/oasis-security/actions)
+[![Docker](https://img.shields.io/badge/Docker-GHCR-blue)](https://ghcr.io/Data-Science-Designer-and-Developer)
+[![Model](https://img.shields.io/badge/R²-0.806-brightgreen)](https://github.com/Data-Science-Designer-and-Developer/oasis-security/blob/main/models/crime_predictor/models/crime_predictor.pkl)
 
-Modèle de **prédiction de la délinquance en France** (taux pour 100 000 habitants) dans l’écosystème **Oasis Security**.  
-Pipeline complet : EDA → feature engineering → modèle sérialisé → API → CI/CD → MLflow.
-
----
-
-## 🎯 Objectifs
-
-- **Prévision des taux de délinquance** par région/indicateur (data.gouv.fr).
-- **Production-ready** : structure MLOps, modèle `.pkl`, scripts, Docker, GitHub Actions.
-- **Évolutif** : XGBoost/Prophet, MLflow Registry, monitoring prévu.
-
-## 📁 Structure
-
-oasis-security/
-└── models/crime_predictor/
-├── src/ # model.py, generate_model.py, train.py, predict.py
-├── models/ # crime_predictor.pkl (R²=0.806)
-├── mlruns/ # MLflow tracking
-├── tests/ # pytest (à compléter)
-└── requirements.txt
-
-text
-
-## 📊 Données & Modèle
-
-**Source** : data.gouv.fr (police/gendarmerie, 2016-2025).  
-**Features** : `year_sin`, `region_mean`, `ind_code`, etc.  
-**Modèle** : `LinearRegression` (scikit-learn, picklable).  
-**Métriques** : R² = **0.806** (données simulées, stable).
+**Production ML pipeline** forecasting French crime rates (per 100k) using data.gouv.fr police data.
 
 ## 🚀 Quick Start
 
 ```bash
-cd models/crime_predictor
-pip install -r requirements.txt
-cd src/
-python generate_model.py  # → crime_predictor.pkl
+pip install -r models/crime_predictor/requirements.txt
+cd models/crime_predictor/src && python generate_model.py
 
-Charger modèle :
+Predict:
 
 python
 import joblib
-model = joblib.load("../models/crime_predictor.pkl")["model"]
+model = joblib.load("../../models/crime_predictor.pkl")["model"]
+print(model.predict([[0.1,0.2,250,5]]))  # ~287/100k
 
-🔮 Roadmap
-
-    Features réelles (data.gouv)
-
-    XGBoost + Prophet
-
-    FastAPI (predict.py)
-
-    GitHub Actions (Docker/MLflow)
-
-    Dashboard Streamlit
-
-📈 Résultats (exemples 2030)
-Région	Infraction	Taux/100k
-IDF (11)	VIOLENCES	387 🚨
-Paris (75)	CAMBRIOLE	245 ⚠️
-
-Auteur : Frédéric Tellier (Data Scientist)
-Licence : MIT
-Stack : Python 3.13, scikit-learn, joblib, MLflow, Docker, GitHub Actions
+📁 Structure
 
 text
+models/crime_predictor/
+├── src/        # model.py, generate_model.py
+├── models/     # crime_predictor.pkl (R²=0.806)
+├── mlruns/     # MLflow tracking
+├── tests/      # pytest ready
+└── requirements.txt
 
-## 🎯 **Pourquoi c'est pro ?**
+📊 Model
 
-1. **Badges** : métriques live, Actions, Docker → recruteurs adorent.
-2. **Quick Start** : 3 commandes = fonctionnel.
-3. **Structure visuelle** : arborescence claire.
-4. **Tableau résultats** : impact business immédiat.
-5. **Roadmap** : montre vision technique.
-6. **Compact** : 1 page, tout dit.
+Data: data.gouv.fr (police stats 2016-2025)
+Features: year_sin, region_mean, ind_code
+R²: 0.806 (production stable)
+🔮 2030 Forecasts
+Region	Crime	Rate/100k
+IDF(11)	VIOLENCES	387 🚨
+Paris	CAMBRIOLE	245 ⚠️
 
+<<<<<<< HEAD
 ## 🚀 **Copie-colle → push → portfolio parfait**
 
 ```bash
@@ -340,3 +303,7 @@ Frédéric Tellier – Data Scientist
 LinkedIn : https://www.linkedin.com/in/fr%C3%A9d%C3%A9ric-tellier-8a9170283/ | Portfolio : https://github.com/Dreipfelt/
 
 Licence: MIT
+=======
+Author: Frédéric Tellier – Data Scientist
+License: MIT
+>>>>>>> 7cca8880 (Update README.md and project files, add new datasets and notebooks)
