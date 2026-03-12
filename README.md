@@ -45,24 +45,19 @@ oasis-security/
 ## 📊 Usage
 
 1. Create & activate a virtual environment:
-```bash
 python3 -m venv .venv
 source .venv/bin/activate
-'''
+
 
 2. Install dependencies:
-'''bash 
 pip install -r models/crime_predictor/requirements.txt
-'''
 
 3. Run training: 
-'''bash
 python models/crime_predictor/src/train.py
-'''
 
 4. Start prediction API:
 python models/crime_predictor/src/predict.py
-'''
+
 
 📝 Contribution & CI/CD
 
@@ -75,14 +70,12 @@ Core: Python 3.13, scikit-learn, joblib
 Future: FastAPI, MLflow, Docker, GitHub Actions
 Data: data.gouv.fr (police/gendarmerie 2016-2025)
 
-📝 Author
-
-Frédéric Tellier – Data Scientist
-LinkedIn : https://www.linkedin.com/in/fr%C3%A9d%C3%A9ric-tellier-8a9170283/ | Portfolio : https://github.com/Dreipfelt/
-
-Licence: MIT
-=======
-Author: Frédéric Tellier – Data Scientist
 📜 License
 
 MIT License
+
+📝 Author
+
+Frédéric Tellier – Data Scientist
+LinkedIn : https://www.linkedin.com/in/fr%C3%A9d%C3%A9ric-tellier-8a9170283/   
+| Portfolio : https://github.com/Dreipfelt/  
