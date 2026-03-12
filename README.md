@@ -21,23 +21,23 @@ This repository demonstrates a **ML project with clear structure, documentation,
 
 ## 📁 Repository Structure
 
-oasis-security/
-├── .github/ # GitHub workflows (CI/CD)
-├── data/ # Processed data files
-├── docs/ # Documentation & dashboards
-├── images/ # Visual assets & plots
-├── models/
-│ └── crime_predictor/
-│ ├── src/ # Source code for model
-│ ├── models/ # Serialized model (.pkl)
-│ ├── mlruns/ # MLflow tracking data
-│ ├── tests/ # Unit tests (optional)
-│ └── requirements.txt # Dependencies for this model
-├── notebooks/ # Exploration & analysis notebooks
-├── pipeline/ # Scripts for automation
-├── Dockerfile # Docker configuration
-├── LICENSE # License
-└── README.md # Project overview
+oasis-security/  
+├── .github/ # GitHub workflows (CI/CD)  
+├── data/ # Processed data files  
+├── docs/ # Documentation & dashboards  
+├── images/ # Visual assets & plots  
+├── models/  
+│ └── crime_predictor/  
+│ ├── src/ # Source code for model  
+│ ├── models/ # Serialized model (.pkl)  
+│ ├── mlruns/ # MLflow tracking data  
+│ ├── tests/ # Unit tests (optional)  
+│ └── requirements.txt # Dependencies for this model  
+├── notebooks/ # Exploration & analysis notebooks  
+├── pipeline/ # Scripts for automation  
+├── Dockerfile # Docker configuration  
+├── LICENSE # License  
+└── README.md # Project overview  
 
 
 ---
@@ -48,17 +48,21 @@ oasis-security/
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
+'''
 
 2. Install dependencies:
 '''bash 
 pip install -r models/crime_predictor/requirements.txt
+'''
 
 3. Run training: 
 '''bash
 python models/crime_predictor/src/train.py
+'''
 
 4. Start prediction API:
 python models/crime_predictor/src/predict.py
+'''
 
 📝 Contribution & CI/CD
 
