@@ -1,5 +1,4 @@
-<<<<<<< HEAD
-**🏴‍☠️ Oasis Security – Crime Predictor
+🏴‍☠️ Oasis Security – Crime Predictor
 
 Modèle de prédiction de la délinquance en France (taux pour 100 000 habitants) intégré dans l’écosystème Oasis Security.
 L’objectif est de fournir un pipeline complet et industrialisable : de l’exploration à la mise en production (modèle sérialisé, API, CI/CD, MLflow).
@@ -154,50 +153,88 @@ Ce pattern est compatible avec :
 
     ou une intégration dans un pipeline plus large (Oasis, Streamlit, etc.).
 
-=======
->>>>>>> 7cca8880 (Update README.md and project files, add new datasets and notebooks)
 # 🏴‍☠️ Oasis Security – Crime Predictor
 
-[![CI/CD](https://github.com/Data-Science-Designer-and-Developer/oasis-security/actions/workflows/ci-cd.yml/badge.svg)](https://github.com/Data-Science-Designer-and-Developer/oasis-security/actions)
-[![Docker](https://img.shields.io/badge/Docker-GHCR-blue)](https://ghcr.io/Data-Science-Designer-and-Developer)
-[![Model](https://img.shields.io/badge/R²-0.806-brightgreen)](https://github.com/Data-Science-Designer-and-Developer/oasis-security/blob/main/models/crime_predictor/models/crime_predictor.pkl)
+[![CI/CD](https://github.com/Dreipfelt/oasis-security/actions/workflows/ci-cd.yml/badge.svg)](https://github.com/Dreipfelt/oasis-security/actions)
+[![Docker](https://img.shields.io/badge/Docker-GHCR-blue)](https://ghcr.io/Dreipfelt/oasis-security)
+[![Model](https://img.shields.io/badge/Model-R²=0.806-green)](https://github.com/Dreipfelt/oasis-security/blob/master/models/crime_predictor/models/crime_predictor.pkl)
 
-**Production ML pipeline** forecasting French crime rates (per 100k) using data.gouv.fr police data.
+Modèle de **prédiction de la délinquance en France** (taux pour 100 000 habitants) dans l’écosystème **Oasis Security**.  
+Pipeline complet : EDA → feature engineering → modèle sérialisé → API → CI/CD → MLflow.
+
+---
+
+## 🎯 Objectifs
+
+- **Prévision des taux de délinquance** par région/indicateur (data.gouv.fr).
+- **Production-ready** : structure MLOps, modèle `.pkl`, scripts, Docker, GitHub Actions.
+- **Évolutif** : XGBoost/Prophet, MLflow Registry, monitoring prévu.
+
+## 📁 Structure
+
+oasis-security/
+└── models/crime_predictor/
+├── src/ # model.py, generate_model.py, train.py, predict.py
+├── models/ # crime_predictor.pkl (R²=0.806)
+├── mlruns/ # MLflow tracking
+├── tests/ # pytest (à compléter)
+└── requirements.txt
+
+text
+
+## 📊 Données & Modèle
+
+**Source** : data.gouv.fr (police/gendarmerie, 2016-2025).  
+**Features** : `year_sin`, `region_mean`, `ind_code`, etc.  
+**Modèle** : `LinearRegression` (scikit-learn, picklable).  
+**Métriques** : R² = **0.806** (données simulées, stable).
 
 ## 🚀 Quick Start
 
 ```bash
-pip install -r models/crime_predictor/requirements.txt
-cd models/crime_predictor/src && python generate_model.py
+cd models/crime_predictor
+pip install -r requirements.txt
+cd src/
+python generate_model.py  # → crime_predictor.pkl
 
-Predict:
+Charger modèle :
 
 python
 import joblib
-model = joblib.load("../../models/crime_predictor.pkl")["model"]
-print(model.predict([[0.1,0.2,250,5]]))  # ~287/100k
+model = joblib.load("../models/crime_predictor.pkl")["model"]
 
-📁 Structure
+🔮 Roadmap
+
+    Features réelles (data.gouv)
+
+    XGBoost + Prophet
+
+    FastAPI (predict.py)
+
+    GitHub Actions (Docker/MLflow)
+
+    Dashboard Streamlit
+
+📈 Résultats (exemples 2030)
+Région	Infraction	Taux/100k
+IDF (11)	VIOLENCES	387 🚨
+Paris (75)	CAMBRIOLE	245 ⚠️
+
+Auteur : Frédéric Tellier (Data Scientist)
+Licence : MIT
+Stack : Python 3.13, scikit-learn, joblib, MLflow, Docker, GitHub Actions
 
 text
-models/crime_predictor/
-├── src/        # model.py, generate_model.py
-├── models/     # crime_predictor.pkl (R²=0.806)
-├── mlruns/     # MLflow tracking
-├── tests/      # pytest ready
-└── requirements.txt
 
-📊 Model
+## 🎯 **Pourquoi c'est pro ?**
 
-Data: data.gouv.fr (police stats 2016-2025)
-Features: year_sin, region_mean, ind_code
-R²: 0.806 (production stable)
-🔮 2030 Forecasts
-Region	Crime	Rate/100k
-IDF(11)	VIOLENCES	387 🚨
-Paris	CAMBRIOLE	245 ⚠️
+1. **Badges** : métriques live, Actions, Docker → recruteurs adorent.
+2. **Quick Start** : 3 commandes = fonctionnel.
+3. **Structure visuelle** : arborescence claire.
+4. **Tableau résultats** : impact business immédiat.
+5. **Roadmap** : montre vision technique.
+6. **Compact** : 1 page, tout dit.
 
-<<<<<<< HEAD
 ## 🚀 **Copie-colle → push → portfolio parfait**
 
 ```bash
@@ -208,102 +245,3 @@ EOF
 git add README.md
 git commit -m "📖 README pro senior DS"
 git push origin master
-**# Oasis Security – Crime Rate Predictor
-
-[![Python](https://img.shields.io/badge/Python-3.11-blue?logo=python)](https://www.python.org/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-green)](LICENSE)
-
-A predictive model for crime rates in France (per 100,000 inhabitants), fully structured for production use.  
-This repository demonstrates a **ML project with clear structure, documentation, modeling pipeline, and deployment readiness**.
-
----
-
-## 🚀 Project Objectives
-
-- Build a reliable predictive model using official French crime data (from data.gouv.fr).
-- Establish a **clean, reproducible MLOps pipeline**:
-  - Clear folder structure (`data/`, `notebooks/`, `models/`, etc.)
-  - Serialized model for reuse
-  - Training & inference scripts
-  - Integrated CI/CD workflows
-
----
-
-## 📁 Repository Structure
-
-oasis-security/
-├── .github/ # GitHub workflows (CI/CD)
-├── data/ # Processed data files
-├── docs/ # Documentation & dashboards
-├── images/ # Visual assets & plots
-├── models/
-│ └── crime_predictor/
-│ ├── src/ # Source code for model
-│ ├── models/ # Serialized model (.pkl)
-│ ├── mlruns/ # MLflow tracking data
-│ ├── tests/ # Unit tests (optional)
-│ └── requirements.txt # Dependencies for this model
-├── notebooks/ # Exploration & analysis notebooks
-├── pipeline/ # Scripts for automation
-├── Dockerfile # Docker configuration
-├── LICENSE # License
-└── README.md # Project overview
-
-
----
-
-## 📊 Usage
-
-1. Create & activate a virtual environment:
-```bash
-python3 -m venv .venv
-source .venv/bin/activate
-
-2. Install dependencies:
-'''bash 
-pip install -r models/crime_predictor/requirements.txt
-
-3. Run training: 
-'''bash
-python models/crime_predictor/src/train.py
-
-4. Start prediction API:
-python models/crime_predictor/src/predict.py
-
-📝 Contribution & CI/CD
-
-This project is designed to be production ready with GitHub Actions workflows (tests & model builds).
-Contributions welcome 🌟
-
-📜 License
-
-MIT License
-
-
----
-
-### 3️⃣ Commit and push the changes
-
-Après avoir modifié `README.md` avec le contenu ci‑dessus, exécute dans le terminal :
-
-```bash
-git add README.md
-git commit -m "Update README to clear English structure"
-git push
-
-🛠️ Tech Stack
-
-Core: Python 3.13, scikit-learn, joblib
-Future: FastAPI, MLflow, Docker, GitHub Actions
-Data: data.gouv.fr (police/gendarmerie 2016-2025)
-
-📝 Author
-
-Frédéric Tellier – Data Scientist
-LinkedIn : https://www.linkedin.com/in/fr%C3%A9d%C3%A9ric-tellier-8a9170283/ | Portfolio : https://github.com/Dreipfelt/
-
-Licence: MIT
-=======
-Author: Frédéric Tellier – Data Scientist
-License: MIT
->>>>>>> 7cca8880 (Update README.md and project files, add new datasets and notebooks)
