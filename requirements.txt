@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 altair==5.5.0
 attrs==25.4.0
 blinker==1.9.0
@@ -71,3 +72,11 @@ plotly
 scikit-learn
 joblib
 seaborn
+=======
+pandas
+numpy
+plotly
+requests
+openpyxl
+statsmodels
+>>>>>>> ff36748d3349779b5b56d1528924b2b1f5ae6534
