@@ -1,9 +1,8 @@
-altair
-pandas
-streamlit
-plotly
-requests
-prophet
-xgboost
-lightgbm
-scikit-learn
+pandas==2.2.0
+streamlit==1.41.0
+plotly==5.18.0
+prophet==1.1.5
+xgboost==2.0.3
+lightgbm==4.3.0
+scikit-learn==1.4.0
+requests==2.31.0
