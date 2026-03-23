@@ -86,21 +86,21 @@ pip install -r requirements.txt
 
 ### 2. Download and Clean Data
 python script_crimes_et_delits.py
-# → generates data/crimes_clean.parquet
+ → generates data/crimes_clean.parquet
 
 ### 3. Train the Model
 python models/crime_predictor/src/train.py
-# → compares 4 models, logs to MLflow, saves best model
-# → generates models/crime_predictor/models/crime_predictor.pkl
-# → generates models/crime_predictor/models/metrics.json
+ → compares 4 models, logs to MLflow, saves best model
+ → generates models/crime_predictor/models/crime_predictor.pkl
+ → generates models/crime_predictor/models/metrics.json
 
 #### 4. Launch the Dashboard
 streamlit run app.py
-# → http://localhost:8501
+ → http://localhost:8501
 
 ### 5. Launch the API
 uvicorn models.crime_predictor.src.predict:app --reload --port 8000
-# → http://localhost:8000/docs
+ → http://localhost:8000/docs
 
 ---
 
@@ -151,7 +151,7 @@ Validation: 5-fold cross-validation on training set
 
 MLflow Tracking
 mlflow ui --backend-store-uri models/crime_predictor/mlruns
-# → http://localhost:5000
+ → http://localhost:5000
 
 ---
 
@@ -265,4 +265,4 @@ Frédéric Tellier — Data Scientist
 [LinkedIn](**url**https://www.linkedin.com/in/fr%C3%A9d%C3%A9ric-tellier-8a9170283/)
  | [Portfolio]([url](https://github.com/Dreipfelt/))
 
-Project developed as part of CDSD certification — 2025
+Project developed as part of CDSD certification — 2026
