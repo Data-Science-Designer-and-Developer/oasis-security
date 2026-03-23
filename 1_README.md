@@ -42,9 +42,11 @@ This project predicts **French departmental crime rates** by category using offi
 ---
 
 ## 📁 Project Structure
+
+
 oasis-security/  
 ├── .github/  
-│ └── workflows/ # GitHub Act  ions CI/CD  
+│ └── workflows/ # GitHub Actions CI/CD  
 ├── data/ # Cleaned datasets (.parquet)  
 ├── docs/  
 │ └── crime_predictor/ # Technical documentation  
@@ -66,7 +68,7 @@ oasis-security/
 ├── app.py # Main Streamlit dashboard  
 ├── script_crimes_et_delits.py # Data collection & cleaning  
 ├── Dockerfile # Multi-stage build (train → production)  
-├── docker-compose.yml # Full stack (MLflow + Postgres + API)  
+├── docker-compose.yml # Full stack (MLflow + Postgres + API)   
 ├── requirements.txt  
 └── README.md  
 
@@ -84,27 +86,28 @@ pip install -r requirements.txt
 
 ### 2. Download and Clean Data
 python script_crimes_et_delits.py
-# → generates data/crimes_clean.parquet
+ → generates data/crimes_clean.parquet
 
-### 3. Train the Model 
+### 3. Train the Model
 python models/crime_predictor/src/train.py
-# → compares 4 models, logs to MLflow, saves best model
-# → generates models/crime_predictor/models/crime_predictor.pkl
-# → generates models/crime_predictor/models/metrics.json
+ → compares 4 models, logs to MLflow, saves best model
+ → generates models/crime_predictor/models/crime_predictor.pkl
+ → generates models/crime_predictor/models/metrics.json
 
-### 4. Launch the Dashboard
+#### 4. Launch the Dashboard
 streamlit run app.py
-# → http://localhost:8501
+ → http://localhost:8501
 
 ### 5. Launch the API
 uvicorn models.crime_predictor.src.predict:app --reload --port 8000
-# → http://localhost:8000/docs
+ → http://localhost:8000/docs
 
 ---
-🔄 Data Pipeline
-data.gouv.fr (SSMSI)  
+
+## 🔄 Data Pipeline
+data.gouv.fr (SSMSI)
         ↓
-script_crimes_et_delits.py  
+script_crimes_et_delits.py
         ├── Download CSV (requests)  
         ├── Normalize column names (snake_case)  
         ├── Remove duplicates  
@@ -114,26 +117,26 @@ script_crimes_et_delits.py
         │   ├── annual_rate_change (pct_change by dep × category)  
         │   └── year_norm (normalized [0, 1])  
         └── Save Parquet (Snappy)  
-
+                ↓  
         data/crimes_clean.parquet  
-Raw data: 8 columns, ~50,000 rows
-After cleaning: 10 columns, ~49,000 rows (<2% loss)
+
+Raw data: 8 columns, ~50,000 rows  
+After cleaning: 10 columns, ~49,000 rows (<2% loss)  
 
 ---
-🤖 Modeling & Results
+
+## 🤖 Modeling & Results
 Features
-| Feature       | Description                   |
-| ------------- | ----------------------------- |
-| `annee`       | Year (int)                    |
-| `dep_encoded` | Department (LabelEncoded)     |
-| `cat_encoded` | Crime category (LabelEncoded) |
-| `annee_norm`  | Normalized year [0,1]         |
+Feature	Description
+annee	Year (int)
+dep_encoded	Department (LabelEncoded)
+cat_encoded	Crime category (LabelEncoded)
+annee_norm	Normalized year [0,1]
 
 Target: tauxpour100000hab (crime rate per 100,000 inhabitants)
 Split: 80% train / 20% test — random seed 42
 Validation: 5-fold cross-validation on training set
 
-Model Comparison (Test Set)
 | Model             | R² test  | RMSE     | MAE      | CV R² (±std)    |
 | ----------------- | -------- | -------- | -------- | --------------- |
 | Ridge             | 0.71     | 87.4     | 62.1     | 0.69 ± 0.03     |
@@ -141,16 +144,19 @@ Model Comparison (Test Set)
 | Gradient Boosting | 0.88     | 56.1     | 40.2     | 0.86 ± 0.02     |
 | **XGBoost** ✅    | **0.91** | **49.8** | **35.3** | **0.90 ± 0.01** |
 
+
   Best model: XGBoost — R²=0.91 on test set
   Low train/test gap → no significant overfitting
   Low CV variance → confirmed robustness
 
 MLflow Tracking
 mlflow ui --backend-store-uri models/crime_predictor/mlruns
-# → http://localhost:5000
+ → http://localhost:5000
 
 ---
-📊 Streamlit Dashboard
+
+## 📊 Streamlit Dashboard
+
 5 interactive pages:
 | Page                 | Content                                               |
 | -------------------- | ----------------------------------------------------- |
@@ -161,7 +167,8 @@ mlflow ui --backend-store-uri models/crime_predictor/mlruns
 | Ethics & Limitations | Biases and usage limits                               |
 
 ---
-🌐 FastAPI Endpoints
+
+## 🌐 FastAPI Endpoints
 Available Endpoints
 | Method | Endpoint   | Description                       |
 | ------ | ---------- | --------------------------------- |
@@ -173,7 +180,6 @@ Example Request
 curl -X POST http://localhost:8000/predict \
   -H "Content-Type: application/json" \
   -d '{"annee": 2025, "dep_encoded": 5, "cat_encoded": 0, "annee_norm": 1.0}'
-
 {
   "predicted_rate": 312.47,
   "unit": "incidents per 100,000 inhabitants",
@@ -182,7 +188,8 @@ curl -X POST http://localhost:8000/predict \
 }
 
 ---
-🧪 Tests
+
+## 🧪 Tests
 # Run all tests
 pytest models/crime_predictor/tests/ -v
 
@@ -196,61 +203,66 @@ Test coverage:
 | `TestModel`         | Shape, type, positivity, R², determinism (7 assertions)     |
 | `TestSerialization` | Joblib serialization, metrics.json structure (2 assertions) |
 
----
-🐳 Docker & CI/CD
-Multi-stage Docker
-# Build (training → production)
+--- 
+
+## 🐳 Docker & CI/CD
+# Multi-stage Docker
+Build (training → production)
 docker build -t oasis-security:latest .
 
 # Run API
 docker run -p 8000:8000 oasis-security:latest
 
-Full Stack (MLflow + Postgres + API)
+# Full Stack (MLflow + Postgres + API)
 docker-compose up -d
-# MLflow UI → http://localhost:5000
-# API        → http://localhost:8000/docs
+MLflow UI → http://localhost:5000
+API        → http://localhost:8000/docs
 
-GitHub Actions CI/CD
+# GitHub Actions CI/CD
+
 .github/workflows/ci-cd.yml triggers on each push:
 
-Linting (flake8)
-Unit tests (pytest)
-Docker build
-Push Docker image to GHCR
+1. Linting (flake8)
+2. Unit tests (pytest)
+3. Docker build
+4. Push Docker image to GHCR
 
----
-⚠️ Ethics & Limitations
+--- 
+
+## ⚠️ Ethics & Limitations
 
 This model is a statistical exploration tool, not an operational decision system.
 
 Data limitations:
 
-Covers only recorded crimes (dark figure estimated 50–80%)
-Recording practices vary by department
-No infra-departmental data
+- Covers only recorded crimes (dark figure estimated 50–80%)
+- Recording practices vary by department
+- No infra-departmental data
 
 Model biases:
 
-Reflects reporting biases
-Correlation ≠ causation
-Not suitable for external shocks (COVID, economic crises)
+- Reflects reporting biases
+- Correlation ≠ causation
+- Not suitable for external shocks (COVID, economic crises)
 
 Prohibited use:
 
-Predictive targeting of individuals or geographic areas
-Judicial or penal decision-making
+- Predictive targeting of individuals or geographic areas
+- Judicial or penal decision-making
 
 Compliance: aggregated anonymized open data — no personal data used.
 
 ---
+
 📜 License
-MIT — see LICENSE 
+MIT — see LICENSE
 
 ---
+
 👤 Author
+
 Frédéric Tellier — Data Scientist
-LinkedIN: https://www.linkedin.com/in/fr%C3%A9d%C3%A9ric-tellier-8a9170283/ ; Portfolio: https://github.com/Dreipfelt/
+[LinkedIn](**url**https://www.linkedin.com/in/fr%C3%A9d%C3%A9ric-tellier-8a9170283/)
+ | [Portfolio]([url](https://github.com/Dreipfelt/))
 
-Project developed as part of CDSD certification — 2025
-
----
+Project developed as part of CDSD certification — 2026
