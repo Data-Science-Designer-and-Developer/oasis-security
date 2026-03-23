@@ -38,33 +38,33 @@ Deploy a prediction API (FastAPI) and interactive dashboard (Streamlit)
 Apply MLOps best practices: versioning, testing, CI/CD, Docker
 
 📁 Project Structure
-oasis-security/
-├── .github/
-│   └── workflows/          # GitHub Actions CI/CD
-├── data/                   # Cleaned data (.parquet)
-├── docs/
-│   └── crime_predictor/    # Technical documentation
-├── images/                 # Visualizations & plots
-├── models/
-│   └── crime_predictor/
-│       ├── src/
-│       │   ├── train.py    # ← Training pipeline (model comparison)
-│       │   └── predict.py  # ← FastAPI API
-│       ├── models/
-│       │   ├── crime_predictor.pkl   # Serialized model
-│       │   └── metrics.json          # Train/test metrics
-│       ├── mlruns/         # MLflow experiments
-│       └── tests/
-│           └── test_model.py  # ← Unit tests
-├── notebooks/              # Exploration & EDA
-├── pipeline/               # Automation scripts
-├── streamlit/              # Additional Streamlit assets
-├── app.py                  # ← Main Streamlit dashboard
-├── script_crimes_et_delits.py  # ← Data collection & cleaning
-├── Dockerfile              # Multi-stage build (train → production)
-├── docker-compose.yml      # Full stack (MLflow + Postgres + API)
-├── requirements.txt
-└── README.md
+oasis-security/ 
+├── .github/ 
+│   └── workflows/           # GitHub Actions CI/CD
+├── data/                    # Cleaned data (.parquet)
+├── docs/ 
+│   └── crime_predictor/     # Technical documentation
+├── images/                  # Visualizations & plots
+├── models/ 
+│   └── crime_predictor/ 
+│       ├── src/ 
+│       │   ├── train.py     # ← Training pipeline (model comparison)
+│       │   └── predict.py   # ← FastAPI API
+│       ├── models/ 
+│       │   ├── crime_predictor.pkl    # Serialized model
+│       │   └── metrics.json           # Train/test metrics
+│       ├── mlruns/          # MLflow experiments
+│       └── tests/ 
+│           └── test_model.py   # ← Unit tests
+├── notebooks/               # Exploration & EDA
+├── pipeline/                # Automation scripts
+├── streamlit/               # Additional Streamlit assets
+├── app.py                   # ← Main Streamlit dashboard
+├── script_crimes_et_delits.py   # ← Data collection & cleaning
+├── Dockerfile               # Multi-stage build (train → production)
+├── docker-compose.yml       # Full stack (MLflow + Postgres + API)
+├── requirements.txt 
+└── README.md 
 
 ⚙️ Installation & Run
 1. Clone & Install
