@@ -1,0 +1,15 @@
+artifact_uri: /home/frederic/Documents/Jedha/Jedha/02_Data Science and Eng - Fullstack
+  - Full-Time/X_Projects/Project_Oasis/oasis-security-complete/mlruns/685456687184304475/cd5c2b7815094ec3b6b51b9cfa1dbe4e/artifacts
+end_time: 1774283304960
+entry_point_name: ''
+experiment_id: '685456687184304475'
+lifecycle_stage: active
+run_id: cd5c2b7815094ec3b6b51b9cfa1dbe4e
+run_name: GradientBoosting
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1774283301352
+status: 3
+tags: []
+user_id: frederic

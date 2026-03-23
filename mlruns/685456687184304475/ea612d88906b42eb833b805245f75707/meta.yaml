@@ -1,0 +1,15 @@
+artifact_uri: /home/frederic/Documents/Jedha/Jedha/02_Data Science and Eng - Fullstack
+  - Full-Time/X_Projects/Project_Oasis/oasis-security-complete/mlruns/685456687184304475/ea612d88906b42eb833b805245f75707/artifacts
+end_time: 1774283309332
+entry_point_name: ''
+experiment_id: '685456687184304475'
+lifecycle_stage: active
+run_id: ea612d88906b42eb833b805245f75707
+run_name: XGBoost
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1774283304963
+status: 3
+tags: []
+user_id: frederic

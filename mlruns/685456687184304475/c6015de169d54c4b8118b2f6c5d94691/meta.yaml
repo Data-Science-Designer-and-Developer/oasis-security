@@ -1,0 +1,15 @@
+artifact_uri: /home/frederic/Documents/Jedha/Jedha/02_Data Science and Eng - Fullstack
+  - Full-Time/X_Projects/Project_Oasis/oasis-security-complete/mlruns/685456687184304475/c6015de169d54c4b8118b2f6c5d94691/artifacts
+end_time: 1774283301350
+entry_point_name: ''
+experiment_id: '685456687184304475'
+lifecycle_stage: active
+run_id: c6015de169d54c4b8118b2f6c5d94691
+run_name: RandomForest
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1774283296733
+status: 3
+tags: []
+user_id: frederic

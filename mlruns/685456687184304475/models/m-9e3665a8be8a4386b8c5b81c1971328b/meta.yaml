@@ -1,0 +1,11 @@
+artifact_location: /home/frederic/Documents/Jedha/Jedha/02_Data Science and Eng -
+  Fullstack - Full-Time/X_Projects/Project_Oasis/oasis-security-complete/mlruns/685456687184304475/models/m-9e3665a8be8a4386b8c5b81c1971328b/artifacts
+creation_timestamp: 1774283302283
+experiment_id: '685456687184304475'
+last_updated_timestamp: 1774283304958
+model_id: m-9e3665a8be8a4386b8c5b81c1971328b
+model_type: null
+name: model
+source_run_id: cd5c2b7815094ec3b6b51b9cfa1dbe4e
+status: 2
+status_message: null
