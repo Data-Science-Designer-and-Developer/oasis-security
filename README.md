@@ -104,7 +104,7 @@ uvicorn models.crime_predictor.src.predict:app --reload --port 8000
 
 ---
 
-🔄 Data Pipeline
+# 🔄 Data Pipeline
 data.gouv.fr (SSMSI)
         ↓
 script_crimes_et_delits.py
@@ -125,7 +125,7 @@ After cleaning: 10 columns, ~49,000 rows (<2% loss)
 
 ---
 
-🤖 Modeling & Results
+# 🤖 Modeling & Results
 Features
 Feature	Description
 annee	Year (int)
@@ -155,7 +155,7 @@ mlflow ui --backend-store-uri models/crime_predictor/mlruns
 
 ---
 
-📊 Streamlit Dashboard
+# 📊 Streamlit Dashboard
 
 5 interactive pages:
 | Page                 | Content                                               |
@@ -166,7 +166,8 @@ mlflow ui --backend-store-uri models/crime_predictor/mlruns
 | ML Prediction        | Interactive simulator with historical graph           |
 | Ethics & Limitations | Biases and usage limits                               |
 
-🌐 FastAPI Endpoints
+---
+# 🌐 FastAPI Endpoints
 Available Endpoints
 | Method | Endpoint   | Description                       |
 | ------ | ---------- | --------------------------------- |
@@ -227,7 +228,7 @@ GitHub Actions CI/CD
 
 --- 
 
-⚠️ Ethics & Limitations
+# ⚠️ Ethics & Limitations
 
 This model is a statistical exploration tool, not an operational decision system.
 
