@@ -206,19 +206,19 @@ Test coverage:
 --- 
 
 ## 🐳 Docker & CI/CD
-Multi-stage Docker
-# Build (training → production)
+#Multi-stage Docker
+Build (training → production)
 docker build -t oasis-security:latest .
 
 # Run API
 docker run -p 8000:8000 oasis-security:latest
 
-Full Stack (MLflow + Postgres + API)
+#Full Stack (MLflow + Postgres + API)
 docker-compose up -d
-# MLflow UI → http://localhost:5000
-# API        → http://localhost:8000/docs
+MLflow UI → http://localhost:5000
+API        → http://localhost:8000/docs
 
-GitHub Actions CI/CD
+#GitHub Actions CI/CD
 
 .github/workflows/ci-cd.yml triggers on each push:
 
