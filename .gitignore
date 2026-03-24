@@ -10,3 +10,4 @@ notebooks/data/
 *.docx
 .DS_Store
 venv/
+0_README.md
