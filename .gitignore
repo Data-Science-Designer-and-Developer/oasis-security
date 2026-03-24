@@ -9,3 +9,4 @@ notebooks/data/
 *.xlsx
 *.docx
 .DS_Store
+venv/
