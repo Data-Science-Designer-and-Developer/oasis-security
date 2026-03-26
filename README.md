@@ -73,7 +73,7 @@ published figures without manual intervention.
 ┌─────────────────────────────────────────────────────────────┐
 │                      DATA PIPELINE                          │
 │                                                             │
-│  data.gouv.fr ──► load_data() ──► detect_columns()         │
+│  data.gouv.fr ──► load_data() ──► detect_columns()          │
 │                                         │                   │
 │                                ┌────────▼────────┐          │
 │                                │  Preprocessing  │          │
@@ -84,7 +84,7 @@ published figures without manual intervention.
 └─────────────────────────────────────────┼───────────────────┘
                                           │
 ┌─────────────────────────────────────────▼───────────────────┐
-│                    FEATURE ENGINEERING                       │
+│                    FEATURE ENGINEERING                      │
 │                                                             │
 │  · Cyclic temporal features  (year_sin, year_cos)           │
 │  · Trend normalisation       (year_trend)                   │
@@ -95,25 +95,25 @@ published figures without manual intervention.
 └─────────────────────────────────────────┬───────────────────┘
                                           │
 ┌─────────────────────────────────────────▼───────────────────┐
-│                    MODELLING LAYER                           │
+│                    MODELLING LAYER                          │
 │                                                             │
 │  ┌───────────────────┐      ┌───────────────────────────┐   │
 │  │  Train set        │      │  Test set (held out)      │   │
 │  │  2016 → 2023      │─────►│  2024–2025                │   │
 │  └─────────┬─────────┘      └───────────────────────────┘   │
-│            │                                                 │
+│            │                                                │
 │  ┌─────────▼──────────────────────────────────────────┐     │
 │  │  Gradient Boosting · XGBoost · Random Forest       │     │
 │  │  Ridge · LightGBM · Prophet · Holt-Winters         │     │
 │  └─────────────────────────┬──────────────────────────┘     │
-│                            │                                 │
-│          TimeSeriesSplit cross-validation (n=3)              │
-│          MLflow experiment tracking (12 runs)                │
+│                            │                                │
+│          TimeSeriesSplit cross-validation (n=3)             │
+│          MLflow experiment tracking (12 runs)               │
 │          → Champion: Gradient Boosting (R²=0.979)           │
 └─────────────────────────────────────────┬───────────────────┘
                                           │
 ┌─────────────────────────────────────────▼───────────────────┐
-│                    SERVING LAYER                             │
+│                    SERVING LAYER                            │
 │                                                             │
 │  ┌────────────────────────┐   ┌────────────────────────┐    │
 │  │  Streamlit Dashboard   │   │  FastAPI REST API      │    │
@@ -335,6 +335,13 @@ Data: [Licence Ouverte v2.0](https://www.etalab.gouv.fr/licence-ouverte-open-lic
 — © Police Nationale & Gendarmerie Nationale / data.gouv.fr
 
 Code: MIT
+
+
+--- 
+## Author
+Frédéric Tellier  
+  LinkedIn: https://www.linkedin.com/in/frédéric-tellier-8a9170283/  
+  Portfolio: https://github.com/Dreipfelt  
 
 ---
 
