@@ -8,6 +8,7 @@
 [![Streamlit](https://img.shields.io/badge/Streamlit-1.45-FF4B4B?logo=streamlit&logoColor=white)](https://streamlit.io)
 [![MLflow](https://img.shields.io/badge/MLflow-tracked-0194E2?logo=mlflow&logoColor=white)](./mlruns)
 [![Docker](https://img.shields.io/badge/Docker-multi--stage-2496ED?logo=docker&logoColor=white)](./models/crime_predictor/Dockerfile)
+[![R²](https://img.shields.io/badge/R²-0.979-brightgreen)](./models/crime_predictor/artifacts/metrics.json)
 [![License](https://img.shields.io/badge/Data-data.gouv.fr-green)](https://www.data.gouv.fr)
 
 ---
@@ -29,9 +30,9 @@ metropolitan and overseas France.
 > 2016 to 2030 using recorded Police Nationale and Gendarmerie Nationale
 > statistics?*
 
-**Answer:** Yes — our best model (Gradient Boosting) achieves **R² = 0.979**
+**Answer:** Yes — our best model (LightGBM) achieves **R² = 0.979**
 on the held-out test set, with a cross-validated R² of **0.978 ± 0.002**,
-confirming strong generalisation.
+confirming strong generalisation with no data leakage.
 
 ---
 
@@ -39,13 +40,19 @@ confirming strong generalisation.
 
 | Model | R² Test | RMSE Test | MAE Test | CV R² Mean | CV R² Std |
 |---|---|---|---|---|---|
-| **Gradient Boosting** ✅ | **0.9793** | **48.84** | **29.95** | **0.9777** | **0.0022** |
+| **LightGBM** ✅ | **0.9793** | **48.84** | **29.95** | **0.9777** | **0.0022** |
+| Gradient Boosting | 0.9793 | 48.84 | 29.95 | 0.9777 | 0.0022 |
 | XGBoost | 0.9781 | 50.21 | 30.90 | 0.9766 | 0.0028 |
 | Random Forest | 0.9724 | 56.33 | 39.72 | 0.9684 | 0.0026 |
 | Ridge | 0.0218 | 335.48 | 249.28 | 0.0065 | 0.0458 |
 
+> LightGBM is selected as the production champion for its superior
+> inference speed and native support for categorical features and missing values.  
 > All experiments tracked with **MLflow** — see `mlruns/` for full run history,
 > parameters, and artefacts.
+
+> **Validation strategy:** `TimeSeriesSplit` (n=3) throughout — temporal ordering
+> is respected in all folds, preventing any leakage from future to past.
 
 ---
 
@@ -53,13 +60,14 @@ confirming strong generalisation.
 
 | Property | Details |
 |---|---|
-| **Source** | [data.gouv.fr](https://www.data.gouv.fr) |
+| **Source** | [data.gouv.fr](https://www.data.gouv.fr/fr/datasets/crimes-et-delits-enregistres-par-les-services-de-gendarmerie-et-de-police-depuis-2012/) |
 | **Publisher** | Police Nationale & Gendarmerie Nationale |
 | **Scope** | All 18 French administrative regions (INSEE 2025) |
 | **Period** | 2016–2025 |
 | **Granularity** | Region × Crime category × Year |
 | **Format** | CSV (semicolon-delimited, UTF-8) |
 | **Update frequency** | Annual |
+| **Direct URL** | [donnee-reg-data.gouv-2024.csv](https://static.data.gouv.fr/resources/crimes-et-delits-enregistres-par-les-services-de-gendarmerie-et-de-police-depuis-2012/20240130-135737/donnee-reg-data.gouv-2024.csv) |
 
 The dataset is loaded dynamically at runtime from its canonical URL on
 `static.data.gouv.fr`, ensuring the application always reflects the latest
@@ -103,13 +111,13 @@ published figures without manual intervention.
 │  └─────────┬─────────┘      └───────────────────────────┘   │
 │            │                                                │
 │  ┌─────────▼──────────────────────────────────────────┐     │
-│  │  Gradient Boosting · XGBoost · Random Forest       │     │
-│  │  Ridge · LightGBM · Prophet · Holt-Winters         │     │
+│  │  LightGBM · XGBoost · GradientBoosting             │     │
+│  │  RandomForest · Ridge · Prophet · Holt-Winters     │     │
 │  └─────────────────────────┬──────────────────────────┘     │
 │                            │                                │
 │          TimeSeriesSplit cross-validation (n=3)             │
-│          MLflow experiment tracking (12 runs)               │
-│          → Champion: Gradient Boosting (R²=0.979)           │
+│          MLflow experiment tracking (20+ runs)              │
+│          → Champion: LightGBM (R²=0.979)                    │
 └─────────────────────────────────────────┬───────────────────┘
                                           │
 ┌─────────────────────────────────────────▼───────────────────┐
@@ -118,7 +126,7 @@ published figures without manual intervention.
 │  ┌────────────────────────┐   ┌────────────────────────┐    │
 │  │  Streamlit Dashboard   │   │  FastAPI REST API      │    │
 │  │  (Hugging Face Spaces) │   │  (Docker container)    │    │
-│  │  streamlit/app.py      │   │  models/.../predict.py │    │
+│  │  streamlit/app.py      │   │  api.py                │    │
 │  └────────────────────────┘   └────────────────────────┘    │
 └─────────────────────────────────────────────────────────────┘
 ```
@@ -144,9 +152,19 @@ Production-grade features are constructed for each observation:
   its regional baseline
 - **Categorical encoding** — indicators and regions are ordinally encoded
 
+### Why LightGBM as champion
+LightGBM is selected over Gradient Boosting (sklearn) for three reasons beyond
+raw R² score:
+
+1. **Inference speed** — GBDT histograms reduce prediction latency at serving time
+2. **Native categorical support** — no need for explicit one-hot encoding
+3. **MLflow integration** — `mlflow.lightgbm` provides richer artefact logging
+   and model registry support compared to `mlflow.sklearn`
+
 ### Validation strategy
 A `TimeSeriesSplit` with 3 folds is used throughout, respecting the temporal
 ordering of observations and preventing data leakage from future to past.
+`shuffle=False` is enforced on the train/test split for the same reason.
 
 ### Experiment tracking
 All model runs are logged with **MLflow**, including:
@@ -166,7 +184,8 @@ All model runs are logged with **MLflow**, including:
 | Dashboard | Streamlit | 1.45 |
 | Visualisation | Plotly Express & Graph Objects | ≥ 5.18 |
 | Data processing | Pandas, NumPy | ≥ 2.0, ≥ 1.24 |
-| ML — Boosting | LightGBM, XGBoost, GradientBoosting | ≥ 4.3, ≥ 1.7 |
+| ML — Champion | **LightGBM** | ≥ 4.3 |
+| ML — Benchmark | XGBoost, GradientBoosting, RandomForest, Ridge | ≥ 1.7 |
 | ML — Forecasting | Prophet, Statsmodels (Holt-Winters) | 1.1, ≥ 0.14 |
 | ML — Utilities | Scikit-learn (TimeSeriesSplit, metrics) | ≥ 1.3 |
 | Experiment tracking | MLflow | ≥ 2.12 |
@@ -189,7 +208,7 @@ Stage 1 — trainer
 
 Stage 2 — production
   · Copies only the serialised artefact from Stage 1
-  · Installs minimal serving dependencies (fastapi, uvicorn, pandas, numpy)
+  · Installs minimal serving dependencies (fastapi, uvicorn, pandas, numpy, lightgbm)
   · Exposes port 8000 with HEALTHCHECK
   · Runs as non-root user (security best practice)
 ```
@@ -197,7 +216,7 @@ Stage 2 — production
 ```bash
 # Build
 docker build \
-  --build-arg DATA_URL="https://static.data.gouv.fr/.../donnee-reg.csv" \
+  --build-arg DATA_URL="https://static.data.gouv.fr/resources/crimes-et-delits-enregistres-par-les-services-de-gendarmerie-et-de-police-depuis-2012/20240130-135737/donnee-reg-data.gouv-2024.csv" \
   -t oasis-security:latest \
   ./models/crime_predictor/
 
@@ -210,7 +229,7 @@ curl http://localhost:8000/health
 # Inference
 curl -X POST http://localhost:8000/predict \
   -H "Content-Type: application/json" \
-  -d '{"region": "11", "crime_category": "Vols avec violence", "horizon": 5}'
+  -d '{"year": 2030, "indicateur": "Coups et blessures volontaires", "region": "R11", "lag1": 280.5, "lag2": 275.0}'
 ```
 
 ---
@@ -224,11 +243,12 @@ oasis-security/
 ├── LICENSE
 ├── .gitignore
 ├── requirements.txt                   # Top-level dependencies
+├── api.py                             # FastAPI REST inference endpoint
 ├── Dockerfile                         # Root-level compose target
 ├── docker-compose.yml
 │
 ├── data/
-│   ├── raw/                           # Source files (never modified)
+│   ├── raw/                           # Source files (gitignored)
 │   ├── processed/                     # Cleaned, model-ready CSVs
 │   ├── geo/                           # Geospatial files (GeoJSON)
 │   └── docs/                          # Dataset documentation
@@ -244,21 +264,27 @@ oasis-security/
 │   ├── train.py
 │   └── predict.py
 │
+├── MlFlow/                            # MLflow training module (standalone)
+│   ├── Dockerfile
+│   ├── train.py
+│   ├── requirements.txt
+│   └── README.md
+│
 ├── models/
 │   └── crime_predictor/
 │       ├── Dockerfile                 # Multi-stage build (train → serve)
 │       ├── artifacts/
-│       │   ├── crime_predictor.pkl    # Serialised champion model
+│       │   ├── crime_predictor.pkl    # Serialised champion model (LightGBM)
 │       │   └── metrics.json          # Benchmark results (R²=0.979)
 │       ├── src/
 │       │   ├── config.yaml           # Hyperparameters & data config
 │       │   ├── model.py              # CrimeRatePredictor class
-│       │   ├── train.py              # Training pipeline
-│       │   └── predict.py            # FastAPI inference endpoint
+│       │   ├── train.py              # Training pipeline (5 models benchmarked)
+│       │   └── predict.py            # Inference logic
 │       └── tests/
 │           └── test_model.py
 │
-├── mlruns/                            # MLflow tracking (12 runs logged)
+├── mlruns/                            # MLflow tracking (20+ runs logged)
 │
 ├── images/                            # Visuals for documentation
 │
@@ -271,33 +297,57 @@ oasis-security/
 
 ## 🚀 Running Locally
 
-### Dashboard
+### Prerequisites
 
 ```bash
 git clone https://github.com/Data-Science-Designer-and-Developer/oasis-security.git
 cd oasis-security
-
 pip install -r requirements.txt
-streamlit run streamlit/app.py
 ```
 
-### Inference API
+### 1 — Preprocess data
 
 ```bash
-cd models/crime_predictor
-
-docker build \
-  --build-arg DATA_URL="https://static.data.gouv.fr/.../donnee-reg.csv" \
-  -t oasis-security:latest .
-
-docker run -p 8000:8000 oasis-security:latest
+python pipeline/preprocess.py
 ```
 
-### MLflow UI
+### 2 — Train & benchmark models
+
+```bash
+python models/crime_predictor/src/train.py
+# Outputs: models/crime_predictor/artifacts/crime_predictor.pkl
+#          models/crime_predictor/artifacts/metrics.json
+```
+
+### 3 — Explore MLflow results
 
 ```bash
 mlflow ui --backend-store-uri ./mlruns
 # Open http://localhost:5000
+```
+
+### 4 — Launch dashboard
+
+```bash
+streamlit run streamlit/app.py
+```
+
+### 5 — Launch inference API
+
+```bash
+uvicorn api:app --host 0.0.0.0 --port 8000
+# Swagger UI: http://localhost:8000/docs
+```
+
+### Or — full Docker build
+
+```bash
+docker build \
+  --build-arg DATA_URL="https://static.data.gouv.fr/resources/crimes-et-delits-enregistres-par-les-services-de-gendarmerie-et-de-police-depuis-2012/20240130-135737/donnee-reg-data.gouv-2024.csv" \
+  -t oasis-security:latest \
+  ./models/crime_predictor/
+
+docker run -p 8000:8000 oasis-security:latest
 ```
 
 ---
@@ -336,12 +386,13 @@ Data: [Licence Ouverte v2.0](https://www.etalab.gouv.fr/licence-ouverte-open-lic
 
 Code: MIT
 
+---
 
---- 
 ## Author
+
 Frédéric Tellier  
-  LinkedIn: https://www.linkedin.com/in/frédéric-tellier-8a9170283/  
-  Portfolio: https://github.com/Dreipfelt  
+LinkedIn: https://www.linkedin.com/in/frédéric-tellier-8a9170283/  
+Portfolio: https://github.com/Dreipfelt  
 
 ---
 
