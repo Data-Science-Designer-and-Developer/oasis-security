@@ -1,6 +1,6 @@
 """
 OASIS Security – Tableau de bord de la délinquance en France
-Données : data.gouv.fr – Bases statistiques communale/départementale/régionale
+Données : data.gouv.fr – Base statistique régionale
 Déployable sur Hugging Face Spaces (Streamlit)
 """
 
@@ -9,9 +9,7 @@ import pandas as pd
 import numpy as np
 import plotly.express as px
 import plotly.graph_objects as go
-from plotly.subplots import make_subplots
 import requests
-import json
 import io
 try:
     from statsmodels.tsa.holtwinters import ExponentialSmoothing
@@ -39,18 +37,29 @@ DATASET_URL = (
 )
 
 GEOJSON_URL = (
-    "https://raw.githubusercontent.com/gregoiredavid/france-geojson/master/departements-version-simplifiee.geojson"
+    "https://raw.githubusercontent.com/gregoiredavid/france-geojson/master/"
+    "regions-version-simplifiee.geojson"
 )
 
+# Correspondance code INSEE région → nom
+REGIONS = {
+    "01": "Guadeloupe", "02": "Martinique", "03": "Guyane",
+    "04": "La Réunion", "06": "Mayotte", "11": "Île-de-France",
+    "24": "Centre-Val de Loire", "27": "Bourgogne-Franche-Comté",
+    "28": "Normandie", "32": "Hauts-de-France", "44": "Grand Est",
+    "52": "Pays de la Loire", "53": "Bretagne",
+    "75": "Nouvelle-Aquitaine", "76": "Occitanie",
+    "84": "Auvergne-Rhône-Alpes", "93": "Provence-Alpes-Côte d'Azur",
+    "94": "Corse",
+}
+
 # ─────────────────────────────────────────────
-# CUSTOM CSS – couleurs sombres inspirées d'OASIS
+# CUSTOM CSS
 # ─────────────────────────────────────────────
 st.markdown("""
 <style>
-    /* Fond général */
     .stApp { background-color: #0d1117; color: #e6edf3; }
     section[data-testid="stSidebar"] { background-color: #161b22; }
-    /* Cartes métriques */
     div[data-testid="metric-container"] {
         background-color: #1c2128;
         border: 1px solid #30363d;
@@ -58,34 +67,32 @@ st.markdown("""
         padding: 16px;
     }
     div[data-testid="metric-container"] label { color: #8b949e !important; }
-    div[data-testid="metric-container"] div { color: #e6edf3 !important; }
-    /* Titres */
+    div[data-testid="metric-container"] div   { color: #e6edf3 !important; }
     h1, h2, h3 { color: #58a6ff; }
-    /* Séparateurs */
     hr { border-color: #30363d; }
-    /* Multiselect tags */
     .stMultiSelect span[data-baseweb="tag"] { background-color: #1f6feb; }
 </style>
 """, unsafe_allow_html=True)
+
 
 # ─────────────────────────────────────────────
 # CHARGEMENT DES DONNÉES
 # ─────────────────────────────────────────────
 @st.cache_data(show_spinner="📥 Chargement du dataset data.gouv.fr…")
-def load_data():
-    try:
-        df = pd.read_csv(DATASET_URL, sep=";", encoding="utf-8", low_memory=False)
-    except Exception:
+def load_data() -> pd.DataFrame | None:
+    for sep in [";", ","]:
         try:
-            df = pd.read_csv(DATASET_URL, sep=",", encoding="utf-8", low_memory=False)
-        except Exception as e:
-            st.error(f"Impossible de charger le dataset : {e}")
-            return None
-    return df
+            df = pd.read_csv(DATASET_URL, sep=sep, encoding="utf-8", low_memory=False)
+            if len(df.columns) > 2:
+                return df
+        except Exception:
+            continue
+    st.error("Impossible de charger le dataset. Vérifiez votre connexion.")
+    return None
 
 
-@st.cache_data(show_spinner="🗺️ Chargement du GeoJSON…")
-def load_geojson():
+@st.cache_data(show_spinner="🗺️ Chargement du GeoJSON régions…")
+def load_geojson() -> dict | None:
     try:
         r = requests.get(GEOJSON_URL, timeout=15)
         return r.json()
@@ -96,25 +103,17 @@ def load_geojson():
 
 # ─────────────────────────────────────────────
 # DÉTECTION AUTOMATIQUE DES COLONNES
+# Adapté au schéma régional data.gouv.fr 2024-2025
 # ─────────────────────────────────────────────
-def detect_columns(df: pd.DataFrame):
-    """
-    Détecte automatiquement les colonnes clés quel que soit le schéma exact du CSV.
-    Retourne un dict: {role: nom_colonne}
-    """
+def detect_columns(df: pd.DataFrame) -> dict:
     cols = {c.lower().strip(): c for c in df.columns}
     mapping = {}
 
-    # Colonne département
-    for candidate in ["num_dep", "dep", "codgeo", "code_dep", "departement", "code_departement", "numdep"]:
+    # Colonne région (priorité au schéma régional)
+    for candidate in ["code_region", "code_reg", "reg", "num_reg",
+                       "codgeo", "code_dep", "dep", "num_dep"]:
         if candidate in cols:
-            mapping["dep"] = cols[candidate]
-            break
-
-    # Colonne libellé département
-    for candidate in ["lib_dep", "libgeo", "nom_dep", "departement", "libelle_departement", "libelle"]:
-        if candidate in cols and candidate != mapping.get("dep", "").lower():
-            mapping["lib_dep"] = cols[candidate]
+            mapping["region"] = cols[candidate]
             break
 
     # Colonne année
@@ -124,25 +123,27 @@ def detect_columns(df: pd.DataFrame):
             break
 
     # Colonne type crime/délit
-    for candidate in ["classe", "indicateur", "type_crime", "libelle_index", "index", "faits", "libelle_classe", "crime"]:
+    for candidate in ["indicateur", "classe", "type_crime", "libelle_index",
+                       "index", "faits", "libelle_classe", "crime"]:
         if candidate in cols:
             mapping["classe"] = cols[candidate]
             break
 
     # Colonne valeur / nombre de faits
-    for candidate in ["faits", "nb_faits", "valeur", "nombre", "count", "total", "nbr_faits", "nombre_faits"]:
+    for candidate in ["nombre", "faits", "nb_faits", "valeur", "count",
+                       "total", "nbr_faits", "nombre_faits"]:
         if candidate in cols and candidate != mapping.get("classe", "").lower():
             mapping["valeur"] = cols[candidate]
             break
 
     # Colonne taux
-    for candidate in ["taux", "taux_pour_mille", "tx", "taux_faits", "taux_criminalite"]:
+    for candidate in ["taux_pour_mille", "taux", "tx", "taux_faits"]:
         if candidate in cols:
             mapping["taux"] = cols[candidate]
             break
 
     # Colonne population
-    for candidate in ["pop", "population", "pop_legale", "population_municipale"]:
+    for candidate in ["insee_pop", "pop", "population", "pop_legale"]:
         if candidate in cols:
             mapping["pop"] = cols[candidate]
             break
@@ -154,28 +155,24 @@ def detect_columns(df: pd.DataFrame):
 # PRÉVISIONS
 # ─────────────────────────────────────────────
 def forecast_series(series: pd.Series, horizon: int = 5) -> pd.Series:
-    """
-    Applique Holt-Winters ou une régression linéaire simple pour prévoir
-    les valeurs jusqu'à 2030.
-    """
     series = series.dropna()
     if len(series) < 3:
         return pd.Series(dtype=float)
 
-    last_year = int(series.index[-1])
+    last_year    = int(series.index[-1])
     future_years = list(range(last_year + 1, last_year + horizon + 1))
 
     try:
-        model = ExponentialSmoothing(series.values, trend="add", seasonal=None, damped_trend=True)
-        fit = model.fit(optimized=True)
+        model = ExponentialSmoothing(
+            series.values, trend="add", seasonal=None, damped_trend=True
+        )
+        fit           = model.fit(optimized=True)
         forecast_vals = fit.forecast(horizon)
     except Exception:
-        # Régression linéaire de secours
-        x = np.arange(len(series))
-        coef = np.polyfit(x, series.values, 1)
+        x             = np.arange(len(series))
+        coef          = np.polyfit(x, series.values, 1)
         forecast_vals = np.polyval(coef, np.arange(len(series), len(series) + horizon))
 
-    # Eviter les valeurs négatives
     forecast_vals = np.maximum(forecast_vals, 0)
     return pd.Series(forecast_vals, index=future_years)
 
@@ -184,7 +181,6 @@ def forecast_series(series: pd.Series, horizon: int = 5) -> pd.Series:
 # APPLICATION PRINCIPALE
 # ─────────────────────────────────────────────
 def main():
-    # ── Header ─────────────────────────────────
     st.markdown("""
     <div style='text-align:center; padding: 10px 0 20px 0;'>
         <h1 style='font-size:2.4rem; margin-bottom:4px;'>🛡️ OASIS Security</h1>
@@ -194,61 +190,56 @@ def main():
     </div>
     """, unsafe_allow_html=True)
 
-    # ── Chargement ─────────────────────────────
-    df_raw = load_data()
+    df_raw  = load_data()
     geojson = load_geojson()
 
     if df_raw is None:
-        st.error("❌ Données indisponibles. Vérifiez votre connexion ou l'URL du dataset.")
+        st.error("❌ Données indisponibles.")
         st.stop()
 
     mapping = detect_columns(df_raw)
 
-    # Vérification des colonnes minimales
-    required = ["dep", "annee", "classe", "valeur"]
-    missing = [r for r in required if r not in mapping]
+    # Vérification colonnes minimales
+    required = ["region", "annee", "classe", "valeur"]
+    missing  = [r for r in required if r not in mapping]
     if missing:
         st.error(
             f"Colonnes non détectées : {missing}. "
-            f"Colonnes disponibles dans le CSV : {list(df_raw.columns[:20])}"
+            f"Colonnes disponibles : {list(df_raw.columns)}"
         )
-        with st.expander("🔍 Aperçu brut du dataset"):
+        with st.expander("🔍 Aperçu brut"):
             st.dataframe(df_raw.head(10))
         st.stop()
 
-    # Noms réels des colonnes
-    COL_DEP    = mapping["dep"]
-    COL_LIB    = mapping.get("lib_dep", COL_DEP)
+    COL_REG    = mapping["region"]
     COL_ANNEE  = mapping["annee"]
     COL_CLASSE = mapping["classe"]
     COL_FAITS  = mapping["valeur"]
     COL_TAUX   = mapping.get("taux")
-    COL_POP    = mapping.get("pop")
 
-    # Nettoyage léger
+    # Nettoyage
     df = df_raw.copy()
-    df[COL_FAITS] = pd.to_numeric(df[COL_FAITS].astype(str).str.replace(",", "."), errors="coerce")
+    df[COL_FAITS] = pd.to_numeric(
+        df[COL_FAITS].astype(str).str.replace(",", "."), errors="coerce"
+    )
     df[COL_ANNEE] = pd.to_numeric(df[COL_ANNEE], errors="coerce")
     df = df.dropna(subset=[COL_FAITS, COL_ANNEE])
     df[COL_ANNEE] = df[COL_ANNEE].astype(int)
 
-    # Listes de valeurs
-    all_years   = sorted(df[COL_ANNEE].unique())
-    all_crimes  = sorted(df[COL_CLASSE].dropna().unique())
-    all_deps    = sorted(df[COL_DEP].dropna().astype(str).unique())
+    # Normalisation code région → string sans zéro initial inutile
+    df[COL_REG] = df[COL_REG].astype(str).str.strip()
 
-    # Libellés département
-    if COL_LIB != COL_DEP:
-        dep_labels = (
-            df[[COL_DEP, COL_LIB]]
-            .drop_duplicates()
-            .set_index(COL_DEP.strip())[COL_LIB]
-            .to_dict()
-        )
-    else:
-        dep_labels = {d: d for d in all_deps}
+    # Labels régions
+    reg_labels = {
+        code: REGIONS.get(str(code).zfill(2), str(code))
+        for code in df[COL_REG].unique()
+    }
 
-    # ── SIDEBAR ────────────────────────────────
+    all_years  = sorted(df[COL_ANNEE].unique())
+    all_crimes = sorted(df[COL_CLASSE].dropna().unique())
+    all_regs   = sorted(df[COL_REG].unique())
+
+    # ── SIDEBAR ──────────────────────────────
     with st.sidebar:
         st.image(
             "https://img.shields.io/badge/OASIS-Security-blue?style=for-the-badge&logo=shield&logoColor=white",
@@ -257,17 +248,15 @@ def main():
         st.markdown("---")
         st.subheader("🗂️ Filtres")
 
-        # Sélection département
-        dep_options = ["🇫🇷 France entière"] + [
-            f"{d} – {dep_labels.get(d, d)}" for d in all_deps
+        reg_options   = ["🇫🇷 France entière"] + [
+            f"{r} – {reg_labels.get(r, r)}" for r in all_regs
         ]
-        dep_selection = st.multiselect(
-            "Département(s)",
-            options=dep_options,
+        reg_selection = st.multiselect(
+            "Région(s)",
+            options=reg_options,
             default=["🇫🇷 France entière"],
         )
 
-        # Sélection crimes
         crime_selection = st.multiselect(
             "Crime(s) / Délit(s)",
             options=all_crimes,
@@ -281,58 +270,58 @@ def main():
             options=all_years,
             value=max(all_years),
         )
-        if crime_selection:
-            map_crime = st.selectbox("Indicateur carte", options=crime_selection)
-        else:
-            map_crime = all_crimes[0] if all_crimes else None
+        map_crime = st.selectbox(
+            "Indicateur carte",
+            options=crime_selection if crime_selection else all_crimes,
+        )
 
         st.markdown("---")
         st.caption("Données : [data.gouv.fr](https://www.data.gouv.fr)")
-        st.caption("CDSD – Data Science Project")
+        st.caption("CDSD – Bloc 6 – Frédéric Tellier")
 
-    # ─── Filtrage ──────────────────────────────
-    france_only = "🇫🇷 France entière" in dep_selection or not dep_selection
+    # ── Filtrage ─────────────────────────────
+    france_only = "🇫🇷 France entière" in reg_selection or not reg_selection
 
     if france_only:
         df_filtered = df.copy()
         scope_label = "France entière"
     else:
-        selected_dep_codes = [s.split(" – ")[0] for s in dep_selection if s != "🇫🇷 France entière"]
-        df_filtered = df[df[COL_DEP].astype(str).isin(selected_dep_codes)]
-        scope_label = ", ".join(selected_dep_codes)
+        selected_codes = [s.split(" – ")[0] for s in reg_selection
+                          if s != "🇫🇷 France entière"]
+        df_filtered    = df[df[COL_REG].isin(selected_codes)]
+        scope_label    = ", ".join(
+            reg_labels.get(c, c) for c in selected_codes
+        )
 
     if crime_selection:
         df_filtered = df_filtered[df_filtered[COL_CLASSE].isin(crime_selection)]
 
-    # ─────────────────────────────────────────────
-    # KPIs – Ligne du haut
-    # ─────────────────────────────────────────────
+    # ── KPIs ─────────────────────────────────
     st.markdown("### 📈 Indicateurs clés")
     col1, col2, col3, col4 = st.columns(4)
 
-    year_max = max(all_years)
+    year_max  = max(all_years)
     year_prev = year_max - 1 if year_max - 1 in all_years else year_max
 
-    total_last  = df_filtered[df_filtered[COL_ANNEE] == year_max][COL_FAITS].sum()
-    total_prev  = df_filtered[df_filtered[COL_ANNEE] == year_prev][COL_FAITS].sum()
-    delta_pct   = ((total_last - total_prev) / total_prev * 100) if total_prev > 0 else 0
+    total_last = df_filtered[df_filtered[COL_ANNEE] == year_max][COL_FAITS].sum()
+    total_prev = df_filtered[df_filtered[COL_ANNEE] == year_prev][COL_FAITS].sum()
+    delta_pct  = ((total_last - total_prev) / total_prev * 100) if total_prev > 0 else 0
 
-    nb_crimes   = df_filtered[COL_CLASSE].nunique()
-    nb_deps_sel = df_filtered[COL_DEP].nunique()
-
-    total_all_years = df_filtered[COL_FAITS].sum()
-
-    col1.metric(f"Faits en {year_max}", f"{total_last:,.0f}".replace(",", " "),
-                delta=f"{delta_pct:+.1f}% vs {year_prev}")
-    col2.metric("Cumul toutes années", f"{total_all_years:,.0f}".replace(",", " "))
-    col3.metric("Types de crimes/délits", nb_crimes)
-    col4.metric("Départements couverts", nb_deps_sel)
+    col1.metric(
+        f"Faits en {year_max}",
+        f"{total_last:,.0f}".replace(",", " "),
+        delta=f"{delta_pct:+.1f}% vs {year_prev}",
+    )
+    col2.metric(
+        "Cumul toutes années",
+        f"{df_filtered[COL_FAITS].sum():,.0f}".replace(",", " "),
+    )
+    col3.metric("Types de crimes/délits", df_filtered[COL_CLASSE].nunique())
+    col4.metric("Régions couvertes",       df_filtered[COL_REG].nunique())
 
     st.markdown("---")
 
-    # ─────────────────────────────────────────────
-    # GRAPHIQUE 1 – Évolution + Prévision
-    # ─────────────────────────────────────────────
+    # ── GRAPHIQUE 1 – Évolution + Prévision ──
     st.markdown("### 📉 Évolution 2016–2025 & Prévisions jusqu'en 2030")
 
     if not crime_selection:
@@ -341,44 +330,34 @@ def main():
         fig_evol = go.Figure()
 
         for crime in crime_selection:
-            df_crime = df_filtered[df_filtered[COL_CLASSE] == crime]
             serie = (
-                df_crime.groupby(COL_ANNEE)[COL_FAITS]
+                df_filtered[df_filtered[COL_CLASSE] == crime]
+                .groupby(COL_ANNEE)[COL_FAITS]
                 .sum()
                 .sort_index()
             )
             if serie.empty:
                 continue
 
-            # Historique
             fig_evol.add_trace(go.Scatter(
-                x=serie.index,
-                y=serie.values,
-                mode="lines+markers",
-                name=crime,
-                line=dict(width=2),
-                marker=dict(size=6),
+                x=serie.index, y=serie.values,
+                mode="lines+markers", name=crime,
+                line=dict(width=2), marker=dict(size=6),
             ))
 
-            # Prévision
-            last_year = int(serie.index[-1])
-            horizon   = 2030 - last_year
+            horizon = 2030 - int(serie.index[-1])
             if horizon > 0:
                 forecast = forecast_series(serie, horizon=horizon)
                 if not forecast.empty:
-                    # Pont entre historique et prévision
-                    bridge_x = [last_year] + list(forecast.index)
-                    bridge_y = [serie.iloc[-1]] + list(forecast.values)
+                    bridge_x = [int(serie.index[-1])] + list(forecast.index)
+                    bridge_y = [serie.iloc[-1]]       + list(forecast.values)
                     fig_evol.add_trace(go.Scatter(
-                        x=bridge_x,
-                        y=bridge_y,
+                        x=bridge_x, y=bridge_y,
                         mode="lines",
                         name=f"{crime} (prévision)",
                         line=dict(width=2, dash="dot"),
-                        showlegend=True,
                     ))
 
-        # Ligne verticale 2025
         fig_evol.add_vline(
             x=year_max,
             line_dash="dash",
@@ -386,26 +365,20 @@ def main():
             annotation_text="Dernier relevé",
             annotation_position="top right",
         )
-
         fig_evol.update_layout(
             template="plotly_dark",
-            paper_bgcolor="#0d1117",
-            plot_bgcolor="#161b22",
+            paper_bgcolor="#0d1117", plot_bgcolor="#161b22",
             font=dict(color="#e6edf3"),
             legend=dict(orientation="h", y=-0.2),
-            xaxis_title="Année",
-            yaxis_title="Nombre de faits",
-            height=480,
-            margin=dict(l=40, r=20, t=30, b=80),
+            xaxis_title="Année", yaxis_title="Nombre de faits",
+            height=480, margin=dict(l=40, r=20, t=30, b=80),
             hovermode="x unified",
         )
         st.plotly_chart(fig_evol, use_container_width=True)
 
-    # ─────────────────────────────────────────────
-    # GRAPHIQUE 2 – Carte choroplèthe
-    # ─────────────────────────────────────────────
+    # ── GRAPHIQUE 2 – Carte choroplèthe régions ──
     st.markdown("---")
-    st.markdown(f"### 🗺️ Carte interactive par département – {map_year}")
+    st.markdown(f"### 🗺️ Carte interactive par région – {map_year}")
 
     if geojson is None:
         st.warning("GeoJSON non chargé. La carte est indisponible.")
@@ -414,100 +387,97 @@ def main():
     else:
         df_map = (
             df[(df[COL_ANNEE] == map_year) & (df[COL_CLASSE] == map_crime)]
-            .groupby(COL_DEP)[COL_FAITS]
+            .groupby(COL_REG)[COL_FAITS]
             .sum()
             .reset_index()
         )
-        df_map.columns = ["dep", "faits"]
-        df_map["dep"] = df_map["dep"].astype(str).str.zfill(2)
-
-        # Calcul du rang et du pourcentage
-        total_france = df_map["faits"].sum()
-        df_map["pct"] = (df_map["faits"] / total_france * 100).round(2)
-        df_map["rang"] = df_map["faits"].rank(ascending=False).astype(int)
+        df_map.columns       = ["code_region", "faits"]
+        total_france         = df_map["faits"].sum()
+        df_map["pct"]        = (df_map["faits"] / total_france * 100).round(2)
+        df_map["rang"]       = df_map["faits"].rank(ascending=False).astype(int)
+        df_map["nom_region"] = df_map["code_region"].map(
+            lambda x: REGIONS.get(str(x).zfill(2), str(x))
+        )
 
         fig_map = px.choropleth(
             df_map,
             geojson=geojson,
-            locations="dep",
+            locations="code_region",
             featureidkey="properties.code",
             color="faits",
             color_continuous_scale="Reds",
-            hover_data={"faits": True, "pct": True, "rang": True},
+            hover_name="nom_region",
+            hover_data={"faits": True, "pct": True, "rang": True,
+                        "code_region": False},
             labels={"faits": "Faits", "pct": "% national", "rang": "Rang"},
         )
-        fig_map.update_geos(
-            fitbounds="locations",
-            visible=False,
-            bgcolor="#0d1117",
-        )
+        fig_map.update_geos(fitbounds="locations", visible=False,
+                            bgcolor="#0d1117")
         fig_map.update_layout(
             template="plotly_dark",
             paper_bgcolor="#0d1117",
             font=dict(color="#e6edf3"),
             coloraxis_colorbar=dict(title="Faits"),
-            height=550,
-            margin=dict(l=0, r=0, t=10, b=0),
+            height=550, margin=dict(l=0, r=0, t=10, b=0),
         )
         st.plotly_chart(fig_map, use_container_width=True)
 
-    # ─────────────────────────────────────────────
-    # GRAPHIQUE 3 – Top départements
-    # ─────────────────────────────────────────────
+    # ── GRAPHIQUE 3 – Top régions ─────────────
     st.markdown("---")
-    st.markdown(f"### 🏆 Top départements par volume de faits – {year_max}")
+    st.markdown(f"### 🏆 Top régions par volume de faits – {year_max}")
 
     if crime_selection:
         df_top = (
             df[(df[COL_ANNEE] == year_max) & (df[COL_CLASSE].isin(crime_selection))]
-            .groupby(COL_DEP)[COL_FAITS]
+            .groupby(COL_REG)[COL_FAITS]
             .sum()
             .reset_index()
             .sort_values(COL_FAITS, ascending=False)
-            .head(20)
+            .head(18)
         )
-        df_top.columns = ["Département", "Faits"]
-        total_top = df_top["Faits"].sum()
-        df_top["% national"] = (df_top["Faits"] / df[(df[COL_ANNEE] == year_max) & (df[COL_CLASSE].isin(crime_selection))][COL_FAITS].sum() * 100).round(2)
-        df_top["Libellé"] = df_top["Département"].astype(str).map(lambda x: dep_labels.get(x, x))
+        df_top.columns    = ["Code", "Faits"]
+        total_nat         = df[
+            (df[COL_ANNEE] == year_max) & (df[COL_CLASSE].isin(crime_selection))
+        ][COL_FAITS].sum()
+        df_top["% national"] = (df_top["Faits"] / total_nat * 100).round(2)
+        df_top["Région"]     = df_top["Code"].map(
+            lambda x: REGIONS.get(str(x).zfill(2), str(x))
+        )
 
         col_a, col_b = st.columns([2, 1])
 
         with col_a:
             fig_bar = px.bar(
-                df_top,
-                x="Faits",
-                y="Libellé",
-                orientation="h",
-                color="Faits",
-                color_continuous_scale="Blues",
-                text="Faits",
-                hover_data={"% national": True},
+                df_top, x="Faits", y="Région", orientation="h",
+                color="Faits", color_continuous_scale="Blues",
+                text="Faits", hover_data={"% national": True},
             )
-            fig_bar.update_traces(texttemplate="%{text:,.0f}", textposition="outside")
+            fig_bar.update_traces(
+                texttemplate="%{text:,.0f}", textposition="outside"
+            )
             fig_bar.update_layout(
                 template="plotly_dark",
-                paper_bgcolor="#0d1117",
-                plot_bgcolor="#161b22",
+                paper_bgcolor="#0d1117", plot_bgcolor="#161b22",
                 font=dict(color="#e6edf3"),
                 yaxis=dict(autorange="reversed"),
-                showlegend=False,
-                height=500,
+                showlegend=False, height=500,
                 margin=dict(l=10, r=60, t=20, b=20),
             )
             st.plotly_chart(fig_bar, use_container_width=True)
 
         with col_b:
             st.markdown("**Tableau détaillé**")
-            df_display = df_top[["Département", "Libellé", "Faits", "% national"]].copy()
-            df_display["Faits"] = df_display["Faits"].apply(lambda x: f"{x:,.0f}".replace(",", " "))
-            df_display["% national"] = df_display["% national"].apply(lambda x: f"{x:.2f}%")
+            df_display = df_top[["Région", "Faits", "% national"]].copy()
+            df_display["Faits"]       = df_display["Faits"].apply(
+                lambda x: f"{x:,.0f}".replace(",", " ")
+            )
+            df_display["% national"]  = df_display["% national"].apply(
+                lambda x: f"{x:.2f}%"
+            )
             df_display.index = range(1, len(df_display) + 1)
             st.dataframe(df_display, use_container_width=True, height=480)
 
-    # ─────────────────────────────────────────────
-    # GRAPHIQUE 4 – Répartition par type de crime
-    # ─────────────────────────────────────────────
+    # ── GRAPHIQUE 4 – Répartition par type ───
     st.markdown("---")
     st.markdown(f"### 🍕 Répartition par type de crime – {year_max} – {scope_label}")
 
@@ -519,58 +489,49 @@ def main():
         .sort_values(COL_FAITS, ascending=False)
     )
     if not df_pie.empty:
-        # Regrouper les petites catégories
         top_n = 10
         if len(df_pie) > top_n:
             others = df_pie.iloc[top_n:][COL_FAITS].sum()
-            df_pie = df_pie.head(top_n)
-            df_pie = pd.concat([df_pie, pd.DataFrame({COL_CLASSE: ["Autres"], COL_FAITS: [others]})])
-
+            df_pie = pd.concat([
+                df_pie.head(top_n),
+                pd.DataFrame({COL_CLASSE: ["Autres"], COL_FAITS: [others]}),
+            ])
         fig_pie = px.pie(
-            df_pie,
-            names=COL_CLASSE,
-            values=COL_FAITS,
+            df_pie, names=COL_CLASSE, values=COL_FAITS,
             color_discrete_sequence=px.colors.sequential.Blues_r,
             hole=0.4,
         )
         fig_pie.update_traces(textposition="inside", textinfo="percent+label")
         fig_pie.update_layout(
-            template="plotly_dark",
-            paper_bgcolor="#0d1117",
+            template="plotly_dark", paper_bgcolor="#0d1117",
             font=dict(color="#e6edf3"),
-            legend=dict(orientation="v", x=1.02),
-            height=460,
+            legend=dict(orientation="v", x=1.02), height=460,
         )
         st.plotly_chart(fig_pie, use_container_width=True)
 
-    # ─────────────────────────────────────────────
-    # SECTION DONNÉES BRUTES
-    # ─────────────────────────────────────────────
+    # ── DONNÉES BRUTES ────────────────────────
     with st.expander("🗃️ Données brutes filtrées"):
-        st.dataframe(df_filtered.sort_values([COL_ANNEE, COL_DEP]).head(500), use_container_width=True)
-        csv = df_filtered.to_csv(index=False).encode("utf-8")
+        st.dataframe(
+            df_filtered.sort_values([COL_ANNEE, COL_REG]).head(500),
+            use_container_width=True,
+        )
         st.download_button(
             label="📥 Télécharger CSV filtré",
-            data=csv,
+            data=df_filtered.to_csv(index=False).encode("utf-8"),
             file_name="oasis_security_filtered.csv",
             mime="text/csv",
         )
 
-    # ─────────────────────────────────────────────
-    # FOOTER
-    # ─────────────────────────────────────────────
+    # ── FOOTER ───────────────────────────────
     st.markdown("---")
-    st.markdown(
-        """
-        <div style='text-align:center; color:#8b949e; font-size:0.85rem; padding: 10px 0;'>
-            🛡️ <strong>OASIS Security</strong> · Données : 
-            <a href='https://www.data.gouv.fr' style='color:#58a6ff;'>data.gouv.fr</a> · 
-            Police & Gendarmerie Nationales · 2016–2025 · 
-            Prévisions via Holt-Winters (statsmodels)
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
+    st.markdown("""
+    <div style='text-align:center; color:#8b949e; font-size:0.85rem; padding:10px 0;'>
+        🛡️ <strong>OASIS Security</strong> · Données :
+        <a href='https://www.data.gouv.fr' style='color:#58a6ff;'>data.gouv.fr</a> ·
+        Police & Gendarmerie Nationales · 2016–2025 ·
+        Prévisions via Holt-Winters (statsmodels)
+    </div>
+    """, unsafe_allow_html=True)
 
 
 if __name__ == "__main__":
