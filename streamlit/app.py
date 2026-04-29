@@ -243,7 +243,7 @@ def main():
     with st.sidebar:
         st.image(
             "https://img.shields.io/badge/OASIS-Security-blue?style=for-the-badge&logo=shield&logoColor=white",
-            use_container_width=True,
+            width=300,
         )
         st.markdown("---")
         st.subheader("🗂️ Filtres")
@@ -475,7 +475,7 @@ def main():
                 lambda x: f"{x:.2f}%"
             )
             df_display.index = range(1, len(df_display) + 1)
-            st.dataframe(df_display, use_container_width=True, height=480)
+            st.dataframe(df_display, width=300, height=480)
 
     # ── GRAPHIQUE 4 – Répartition par type ───
     st.markdown("---")
@@ -513,7 +513,7 @@ def main():
     with st.expander("🗃️ Données brutes filtrées"):
         st.dataframe(
             df_filtered.sort_values([COL_ANNEE, COL_REG]).head(500),
-            use_container_width=True,
+            width=300,
         )
         st.download_button(
             label="📥 Télécharger CSV filtré",
