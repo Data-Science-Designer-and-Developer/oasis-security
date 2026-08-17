@@ -26,9 +26,7 @@ dashboard and REST inference API — covering all 18 administrative regions of
 metropolitan and overseas France.
 
 **Key question:**
-> *Can we accurately model and forecast regional crime trends in France from
-> 2016 to 2030 using recorded Police Nationale and Gendarmerie Nationale
-> statistics?*
+> "Can we model regional crime trends from 2016–2025 and generate forecasts for 2026–2030?*
 
 **Answer:** Yes — our best model (LightGBM) achieves **R² = 0.979**
 on the held-out test set, with a cross-validated R² of **0.978 ± 0.002**,
@@ -368,9 +366,8 @@ purposes. Forecasts are indicative and subject to the inherent limitations of
 statistical modelling on short time series. The analysis carries no
 discriminatory intent with respect to geographical areas or populations.
 
-Data processing complies with the principles of the **GDPR** (Regulation (EU)
-2016/679), in particular data minimisation, purpose limitation, and storage
-limitation.
+No personal data is processed. The project uses publicly available, 
+aggregated regional statistics.
 
 > ⚠️ Recorded crime figures reflect offences *registered* by police and
 > gendarmerie services — not actual crime rates. Under-reporting, changes in
